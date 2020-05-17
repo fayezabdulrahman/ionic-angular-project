@@ -1,3 +1,4 @@
+import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { Component, OnInit } from '@angular/core';
 import { Offer } from '../../model/offer.model';
 import { ActivatedRoute } from '@angular/router';
@@ -11,6 +12,7 @@ import { PlacesService } from '../../service/places.service';
 })
 export class EditOfferPage implements OnInit {
   offer: Offer;
+  editOfferForm : FormGroup;
 
   constructor(private route: ActivatedRoute, private navController: NavController, private placesService: PlacesService) { }
 
@@ -21,7 +23,26 @@ export class EditOfferPage implements OnInit {
         return; // this is needed so other code doesn't get executed
       }
       this.offer = this.placesService.getOffer(paramMap.get('placeId'));
+
+      this.editOfferForm = new FormGroup({
+        title: new FormControl(this.offer.title, {
+          updateOn:'blur',
+          validators: [Validators.required],
+          
+        }),
+        description: new FormControl(this.offer.desc, {
+          updateOn: 'blur',
+          validators: [Validators.required, Validators.maxLength(180)]
+        })
+      })
     });
+  }
+
+  editOffer() {
+    if(!this.editOfferForm.valid) {
+      return;
+    }
+    console.log(this.editOfferForm);
   }
 
 }

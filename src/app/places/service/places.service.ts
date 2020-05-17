@@ -12,21 +12,27 @@ export class PlacesService {
       'HollyWood Crib',
       'Located at the centre of HollyWood',
       '../../../assets/images/hollywood.jpg',
-      100
+      100,
+      new Date('2020-01-01'),
+      new Date('2020-12-31')
     ),
     new Place(
       '2',
       'LA Crib',
       'Located at centre of LA Blv.',
       '../../../assets/images/la.jpg',
-      200
+      200,
+      new Date('2020-01-01'),
+      new Date('2020-12-31')
     ),
     new Place(
       '3',
       'San Fran Crib',
       'Located at centre of San Fran.',
       '../../../assets/images/sanfran.jpg',
-      300
+      300,
+      new Date('2020-01-01'),
+      new Date('2020-12-31')
     ),
   ];
 

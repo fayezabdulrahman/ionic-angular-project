@@ -64,7 +64,8 @@ export class PlaceDetailPage implements OnInit {
     const modal = await this.modalControler.create({
       component: CreateBookingComponent,
       componentProps: {
-        selectedPlace: this.place
+        selectedPlace: this.place,
+        selectedMode: mode
       }
     });
     await modal.present();
