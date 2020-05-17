@@ -9,11 +9,16 @@ import { Place } from '../model/place.model';
 })
 export class DiscoverPage implements OnInit {
   loadedPlaces: Place[];
+  listedLoadedPlaces: Place [];
 
   constructor(private placesService: PlacesService) { }
 
   ngOnInit() {
     this.loadedPlaces = this.placesService.places;
+    this.listedLoadedPlaces = this.placesService.places.slice(1);
   }
 
+  toggleSegmentButton(event: any) { 
+    console.log('toggled button', event.detail);
+  }
 }
