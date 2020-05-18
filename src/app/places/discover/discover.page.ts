@@ -1,3 +1,4 @@
+import { AuthService } from './../../auth/service/auth.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlacesService } from '../service/places.service';
 import { Place } from '../model/place.model';
@@ -11,9 +12,10 @@ import { Subscription } from 'rxjs';
 export class DiscoverPage implements OnInit, OnDestroy {
   loadedPlaces: Place[];
   listedLoadedPlaces: Place[];
+  relevantPlaces: Place[];
   private placesSub: Subscription
 
-  constructor(private placesService: PlacesService) { }
+  constructor(private placesService: PlacesService, private authService: AuthService) { }
   
   ngOnDestroy() {
     // clears the places subscription when its not needed to avoid rxjs leaks
@@ -25,11 +27,18 @@ export class DiscoverPage implements OnInit, OnDestroy {
   ngOnInit() {
     this.placesSub = this.placesService.places.subscribe(places => {
       this.loadedPlaces = places;
-      this.listedLoadedPlaces = this.loadedPlaces.slice(1);
+      this.relevantPlaces = this.loadedPlaces;
+      this.listedLoadedPlaces = this.relevantPlaces.slice(1);
     })
   }
 
   toggleSegmentButton(event: any) {
-    console.log('toggled button', event.detail);
+    if(event.detail.value === 'all') {
+      this.relevantPlaces = this.loadedPlaces;
+      this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+    } else {
+      this.relevantPlaces = this.loadedPlaces.filter(place => place.userId !== this.authService.userId);
+      this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+    }
   }
 }

@@ -1,6 +1,8 @@
+import { AuthService } from './../../../auth/service/auth.service';
+import { BookingsService } from './../../../bookings/service/bookings.service';
 import { PlacesService } from './../../service/places.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NavController, ModalController, AlertController, ActionSheetController } from '@ionic/angular';
+import { NavController, ModalController, ActionSheetController, LoadingController } from '@ionic/angular';
 import { Place } from '../../model/place.model';
 import { ActivatedRoute } from '@angular/router';
 import { CreateBookingComponent } from 'src/app/bookings/create-booking/create-booking.component';
@@ -14,14 +16,17 @@ import { Subscription } from 'rxjs';
 export class PlaceDetailPage implements OnInit, OnDestroy {
   place: Place;
   private placeSub: Subscription
+  isBookable = false;
 
   constructor(
     private navController: NavController,
     private route: ActivatedRoute,
     private placesService: PlacesService,
+    private bookingService: BookingsService,
+    private authService: AuthService,
     private modalControler: ModalController,
-    private alertController: AlertController,
-    private actionSheetController: ActionSheetController) { }
+    private actionSheetController: ActionSheetController,
+    private loadingController: LoadingController) { }
 
   ngOnDestroy() {
     // clears the places subscription when its not needed to avoid rxjs leaks 
@@ -38,6 +43,7 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
       }
       this.placeSub = this.placesService.getPlace(paramMap.get('placeId')).subscribe(place => {
         this.place = place;
+        this.isBookable = place.userId !== this.authService.userId; // if the place isn't created by the user this will return true
       });
     });
   }
@@ -81,12 +87,25 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
     });
     await modal.present();
     const { data, role } = await modal.onDidDismiss();
-    if (role === 'confirm') {
-      console.log(data);
-      const alert = await this.alertController.create({ header: 'Success', message: 'Thanks for your booking', buttons: ['Close'] });
-      await alert.present();
-    }
-
+    this.loadingController.create({ keyboardClose: true, message: 'Booking in Progress...' })
+      .then(loadingElement => {
+        loadingElement.present();
+        console.log(role);
+        // if user clicks on confrim, call the bookingSerice to addBooking
+        if (role === 'confirm') {
+          this.bookingService.addBooking
+            (this.place.id,
+              this.place.title,
+              this.place.imageUrl,
+              data.bookingData.firstName,
+              data.bookingData.lastName,
+              data.bookingData.guestNumber,
+              data.bookingData.startDate,
+              data.bookingData.endData).subscribe(() => {
+                loadingElement.dismiss();
+              });
+        }
+      });
   }
 
 }

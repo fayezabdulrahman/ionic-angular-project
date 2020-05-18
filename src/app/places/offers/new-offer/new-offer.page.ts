@@ -50,7 +50,7 @@ export class NewOfferPage implements OnInit {
         this.placeService.addOffer
           (this.offerForm.value.title,
             this.offerForm.value.description,
-            this.offerForm.value.price,
+            +this.offerForm.value.price,
             this.offerForm.value.dateFrom,
             this.offerForm.value.dateTo)
             // when the adding place is complete, we dismiss the loading spinner, and reset the form 
