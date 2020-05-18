@@ -1,4 +1,4 @@
-import { NavController } from '@ionic/angular';
+import { NavController, LoadingController } from '@ionic/angular';
 import { PlacesService } from './../../service/places.service';
 import { Component, OnInit, Input } from '@angular/core'
 import { FormGroup, FormControl, Validators } from '@angular/forms';
@@ -10,7 +10,8 @@ import { FormGroup, FormControl, Validators } from '@angular/forms';
 })
 export class NewOfferPage implements OnInit {
   offerForm: FormGroup;
-  constructor(private placeService: PlacesService, private navController: NavController) { }
+  isOfferCreated = false;
+  constructor(private placeService: PlacesService, private navController: NavController, private loadingController: LoadingController) { }
 
   ngOnInit() {
     this.offerForm = new FormGroup({
@@ -41,15 +42,24 @@ export class NewOfferPage implements OnInit {
     if (!this.offerForm.valid) {
       return;
     }
-    this.placeService.addPlace
-      (
-        this.offerForm.value.title,
-        this.offerForm.value.description,
-        this.offerForm.value.price,
-        this.offerForm.value.dateFrom,
-        this.offerForm.value.dateTo);
+    this.loadingController.create({ keyboardClose: true, message: 'Creating Offer...' })
+      .then(loadingElement => {
+        loadingElement.present(); // present the loading controller
 
-    this.offerForm.reset();
-    this.navController.navigateBack('/places/tabs/offers');
+        // call addOffer from the placeService
+        this.placeService.addOffer
+          (this.offerForm.value.title,
+            this.offerForm.value.description,
+            this.offerForm.value.price,
+            this.offerForm.value.dateFrom,
+            this.offerForm.value.dateTo)
+            // when the adding place is complete, we dismiss the loading spinner, and reset the form 
+            .subscribe(() => {
+              loadingElement.dismiss();
+              this.offerForm.reset();
+              this.navController.navigateBack('/places/tabs/offers');
+            });
+      });
+
   }
 }

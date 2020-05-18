@@ -2,9 +2,10 @@ import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { Component, OnInit, OnDestroy } from '@angular/core';
 import { Offer } from '../../model/offer.model';
 import { ActivatedRoute } from '@angular/router';
-import { NavController } from '@ionic/angular';
+import { NavController, LoadingController } from '@ionic/angular';
 import { PlacesService } from '../../service/places.service';
 import { Subscription } from 'rxjs';
+import { Message } from '@angular/compiler/src/i18n/i18n_ast';
 
 @Component({
   selector: 'app-edit-offer',
@@ -16,7 +17,7 @@ export class EditOfferPage implements OnInit, OnDestroy {
   editOfferForm: FormGroup;
   private offerSub: Subscription
 
-  constructor(private route: ActivatedRoute, private navController: NavController, private placesService: PlacesService) { }
+  constructor(private route: ActivatedRoute, private navController: NavController, private placesService: PlacesService, private loadingController: LoadingController) { }
 
   ngOnDestroy() {
     if (this.offerSub) {
@@ -53,7 +54,21 @@ export class EditOfferPage implements OnInit, OnDestroy {
     if (!this.editOfferForm.valid) {
       return;
     }
-    console.log(this.editOfferForm);
+    this.loadingController.create({ keyboardClose: true, message:'Updating offer...'})
+    .then(loadingElement => {
+      loadingElement.present();
+
+      this.placesService.updateOffer(
+        this.offer.id,
+        this.editOfferForm.value.title,
+        this.editOfferForm.value.desc)
+        .subscribe(() => {
+          loadingElement.dismiss();
+          this.editOfferForm.reset();
+          this.navController.navigateBack('/places/tabs/offers');
+        });
+    });
+
   }
 
 }
