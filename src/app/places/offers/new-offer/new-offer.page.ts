@@ -1,3 +1,5 @@
+import { NavController } from '@ionic/angular';
+import { PlacesService } from './../../service/places.service';
 import { Component, OnInit, Input } from '@angular/core'
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 
@@ -8,7 +10,7 @@ import { FormGroup, FormControl, Validators } from '@angular/forms';
 })
 export class NewOfferPage implements OnInit {
   offerForm: FormGroup;
-  constructor() { }
+  constructor(private placeService: PlacesService, private navController: NavController) { }
 
   ngOnInit() {
     this.offerForm = new FormGroup({
@@ -25,20 +27,29 @@ export class NewOfferPage implements OnInit {
         validators: [Validators.required, Validators.min(1)]
       }),
       dateFrom: new FormControl(null, {
-        updateOn:'blur',
+        updateOn: 'blur',
         validators: [Validators.required]
       }),
       dateTo: new FormControl(null, {
-        updateOn:'blur',
+        updateOn: 'blur',
         validators: [Validators.required]
       })
     });
   }
 
   createOffer() {
-    if(!this.offerForm.valid) {
+    if (!this.offerForm.valid) {
       return;
     }
-    console.log(this.offerForm);
+    this.placeService.addPlace
+      (
+        this.offerForm.value.title,
+        this.offerForm.value.description,
+        this.offerForm.value.price,
+        this.offerForm.value.dateFrom,
+        this.offerForm.value.dateTo);
+
+    this.offerForm.reset();
+    this.navController.navigateBack('/places/tabs/offers');
   }
 }
