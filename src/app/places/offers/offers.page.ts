@@ -11,6 +11,7 @@ import { Subscription } from 'rxjs';
 })
 export class OffersPage implements OnInit, OnDestroy {
   loadedOffers: Offer[];
+  isOffersLoaded = false;
   private offersSub: Subscription
 
   constructor(private placesService: PlacesService, private navController: NavController) { }
@@ -30,6 +31,14 @@ export class OffersPage implements OnInit, OnDestroy {
       this.loadedOffers = offers;
     });
 
+  }
+
+  ionViewWillEnter() {
+    this.isOffersLoaded = true;
+    this.placesService.fetchOffers().subscribe(() => {
+      // afer we have got data back, set it to false
+      this.isOffersLoaded = false;
+    });
   }
 
 

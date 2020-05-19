@@ -12,7 +12,7 @@ import { Subscription } from 'rxjs';
 })
 export class OfferBookingsPage implements OnInit, OnDestroy {
   offer: Offer;
-  private offerSub: Subscription
+  private offerSub: Subscription;
 
   constructor(private route: ActivatedRoute, private navController: NavController, private placesService: PlacesService) { }
   ngOnDestroy() {
