@@ -126,6 +126,33 @@ export class PlacesService {
         }));
   }
 
+  addPlace(title: string, desc: string, price: number, dateFrom: Date, dateTo: Date) {
+    let generatedId: string;
+    const newPlace = new Place(
+      Math.random().toString(),
+      title,
+      desc,
+      '../../../assets/images/sanfran.jpg',
+      price,
+      dateFrom,
+      dateTo,
+      this.authService.userId
+    );
+
+    return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json', {
+      ...newPlace, id: null
+    })
+      .pipe(switchMap(response => {
+        generatedId = response.name; // this is the name of the generated ID from firbase
+        return this.places;
+      }),
+        take(1),
+        tap(placesArray => {
+          newPlace.id = generatedId;
+          this._places.next(placesArray.concat(newPlace));
+        }));
+  }
+
   updateOffer(offerId: string, title: string, description: string) {
     // take(1) takes the latest version of the array of offers
     // tap() allows us to execute code within the offers we are fetching
@@ -202,7 +229,7 @@ export class PlacesService {
           const places = [];
           for (const key in responseData) {
             if (responseData.hasOwnProperty(key)) {
-              places.push(new Offer(key,
+              places.push(new Place(key,
                 responseData[key].title,
                 responseData[key].desc,
                 responseData[key].imageUrl,
@@ -212,7 +239,6 @@ export class PlacesService {
                 responseData[key].userId));
             }
           }
-          console.log(responseData);
           return places;
         }),
         tap(places => {

@@ -1,9 +1,23 @@
 import { LoadingController } from '@ionic/angular';
 import { AuthService } from './../../auth/service/auth.service';
 import { Injectable } from '@angular/core';
-import { take, map, tap, delay } from 'rxjs/operators';
+import { take, map, tap, delay, switchMap } from 'rxjs/operators';
 import { Booking } from '../model/booking.mode';
 import { BehaviorSubject } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { stringify } from 'querystring';
+
+interface bookingData {
+  bookedFrom: string,
+  bookedTo: string,
+  firstName: string,
+  guestNumber: number,
+  lastName: string,
+  placeId: string,
+  placeImage: string,
+  placeTitle: string,
+  userId: string
+}
 
 @Injectable({
   providedIn: 'root'
@@ -11,7 +25,9 @@ import { BehaviorSubject } from 'rxjs';
 export class BookingsService {
   private _bookings = new BehaviorSubject<Booking[]>([]);
 
-  constructor(private authService: AuthService) { }
+  constructor(
+    private authService: AuthService,
+    private http: HttpClient) { }
 
   get bookings() {
     return this._bookings.asObservable();
@@ -25,7 +41,10 @@ export class BookingsService {
     lastName: string,
     guestNumber: number,
     dateFrom: Date,
-    dateTo: Date) {
+    dateTo: Date
+  ) {
+
+    let generatedId: string;
     const newBooking = new Booking(
       Math.random().toString(),
       placeId,
@@ -39,22 +58,58 @@ export class BookingsService {
       dateTo
     );
 
-    // we add tap() so that we can return the subscribe promise and it allows it to be accessed from anywhere in the app
-    return this.bookings.pipe(
-      take(1),
-      delay(1000),
-      tap(bookingsArray => {
-        this._bookings.next(bookingsArray.concat(newBooking));
-      }));
+    return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/bookings.json', {
+      ...newBooking, id: null
+    })
+      .pipe(switchMap(response => {
+        generatedId = response.name;
+        return this.bookings;
+      }),
+        take(1),
+        tap(bookingsArray => {
+          newBooking.id = generatedId;
+          this._bookings.next(bookingsArray.concat(newBooking));
+        }));
   }
 
-  cancelBooking(bookingId: string) {
+  fetchBookings() {
+    return this.http.get<{ [key: string]: bookingData }>(`https://ionic-angular-air-bnb-app.firebaseio.com/bookings.json?orderBy="userId"&equalTo="${this.authService.userId}"`)
+      .pipe(map(bookingData => {
+        const bookings = [];
+        for (const key in bookingData) {
+          if (bookingData.hasOwnProperty(key)) {
+            bookings.push(new Booking(
+              key,
+              bookingData[key].placeId,
+              bookingData[key].userId,
+              bookingData[key].placeTitle,
+              bookingData[key].placeImage,
+              bookingData[key].firstName,
+              bookingData[key].lastName,
+              bookingData[key].guestNumber,
+              new Date(bookingData[key].bookedFrom),
+              new Date(bookingData[key].bookedTo))
+            );
+          }
+        }
+        return bookings;
+      }),
+        tap(bookings => {
+          this._bookings.next(bookings);
+        }));
+  }
 
-    return this.bookings.pipe(
-      take(1),
-      delay(1000),
-      tap(bookingsArray => {
-        this._bookings.next(bookingsArray.filter(bookings => bookings.id !== bookingId));
-      }));
+
+  cancelBooking(bookingId: string) {
+    return this.http.delete(`https://ionic-angular-air-bnb-app.firebaseio.com/bookings/${bookingId}.json`)
+      .pipe(
+        switchMap(() => {
+          return this.bookings;
+        }),
+        take(1),
+        tap(bookingsArray => {
+          this._bookings.next(bookingsArray.filter(bookings => bookings.id !== bookingId));
+        })
+      );
   }
 }

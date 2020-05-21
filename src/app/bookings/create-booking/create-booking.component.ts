@@ -34,7 +34,8 @@ export class CreateBookingComponent implements OnInit {
         Math.random() *
         (new Date(this.startDate).getTime() +
           6 * 24 * 60 * 60 * 1000 -
-          new Date(this.startDate).getTime())).toISOString();
+          new Date(this.startDate).getTime())
+      ).toISOString();
     }
   }
 

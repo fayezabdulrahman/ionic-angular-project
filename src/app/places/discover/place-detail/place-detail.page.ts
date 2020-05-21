@@ -79,6 +79,7 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
     console.log(mode);
 
     const modal = await this.modalControler.create({
+      // creates modal and calls create booking to display the html
       component: CreateBookingComponent,
       componentProps: {
         selectedPlace: this.place,
@@ -90,7 +91,6 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
     this.loadingController.create({ keyboardClose: true, message: 'Booking in Progress...' })
       .then(loadingElement => {
         loadingElement.present();
-        console.log(role);
         // if user clicks on confrim, call the bookingSerice to addBooking
         if (role === 'confirm') {
           this.bookingService.addBooking
@@ -101,7 +101,7 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
               data.bookingData.lastName,
               data.bookingData.guestNumber,
               data.bookingData.startDate,
-              data.bookingData.endData).subscribe(() => {
+              data.bookingData.endDate).subscribe(() => {
                 loadingElement.dismiss();
               });
         }
