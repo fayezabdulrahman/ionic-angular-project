@@ -12,22 +12,22 @@
     <ion-segment-button value="all">All Places</ion-segment-button>
     <ion-segment-button value="bookable">Bookable Places</ion-segment-button>
   </ion-segment>
-  <ion-grid *ngIf="relevantPlaces.length > 0 else noPlaces">
+  <ion-grid *ngIf="relevantPlaces?.length > 0 else loadingPlaces">
     <!-- Featured Place to show first -->
     <ion-row>
       <ion-col size="12" size-sm="8" offset-sm="2" class="ion-align-items-center">
         <ion-card>
           <ion-card-header>
-            <ion-card-title>{{relevantPlaces[0].title}}</ion-card-title>
-            <ion-card-subtitle> {{relevantPlaces[0].price | currency}} Per Night </ion-card-subtitle>
+            <ion-card-title>{{relevantPlaces[0]?.title}}</ion-card-title>
+            <ion-card-subtitle> {{relevantPlaces[0]?.price | currency}} Per Night </ion-card-subtitle>
           </ion-card-header>
-          <ion-img [src]="relevantPlaces[0].imageUrl"></ion-img>
+          <ion-img [src]="relevantPlaces[0]?.imageUrl"></ion-img>
           <ion-card-content>
-            <p>{{relevantPlaces[0].desc}}</p>
+            <p>{{relevantPlaces[0]?.desc}}</p>
           </ion-card-content>
           <div class="ion-text-right">
             <ion-button fill="clear" color="primary"
-              [routerLink]="['/', 'places', 'tabs', 'discover', relevantPlaces[0].id]">
+              [routerLink]="['/', 'places', 'tabs', 'discover', relevantPlaces[0]?.id]">
               Find Out More
             </ion-button>
           </div>
@@ -57,6 +57,16 @@
       <ion-card>
         <ion-card-header>
           <ion-card-title>Sorry there are no bookable places at the moment!</ion-card-title>
+        </ion-card-header>
+      </ion-card>
+    </ion-col>
+  </ng-template>
+
+  <ng-template #loadingPlaces>
+    <ion-col size="12" size-sm="8" offset-sm="2" class="ion-align-items-center" *ngIf="!isPlacesLoaded then noPlaces">
+      <ion-card>
+        <ion-card-header>
+          <ion-card-title>Loading places from the server!!!!!!!!!!!!!!!!!!!!!!</ion-card-title>
         </ion-card-header>
       </ion-card>
     </ion-col>

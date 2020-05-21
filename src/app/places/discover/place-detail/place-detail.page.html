@@ -3,7 +3,7 @@
     <ion-buttons slot="start">
       <ion-back-button defaultHref="/places/tabs/discover"></ion-back-button>
     </ion-buttons>
-    <ion-title>{{place.title}}</ion-title>
+    <ion-title>{{place?.title}}</ion-title>
   </ion-toolbar>
 </ion-header>
 
@@ -11,12 +11,12 @@
   <ion-grid>
     <ion-row>
       <ion-col size-sm="6" offset-sm="3">
-        <ion-img [src]="place.imageUrl"></ion-img>
+        <ion-img [src]="place?.imageUrl"></ion-img>
       </ion-col>
     </ion-row>
     <ion-row>
       <ion-col size-sm="6" offset-sm="3" class="ion-text-center ion-padding">
-        <p>{{place.desc}}</p>
+        <p>{{place?.desc}}</p>
       </ion-col>
     </ion-row>
     <ion-row *ngIf="isBookable">

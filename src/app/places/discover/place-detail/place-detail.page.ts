@@ -49,7 +49,7 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
   }
 
 
-  // this methid uses an action sheet controller which then calls openBookingModal which opens up a popup model on top of the page rendered 
+  // this method uses an action sheet controller which then calls openBookingModal which opens up a popup model on top of the page rendered 
   async bookAPlace() {
     const actionSheet = await this.actionSheetController.create({
       header: 'Select an Option',

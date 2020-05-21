@@ -16,43 +16,22 @@ interface offerData {
   userId: string
 }
 
+interface placeData {
+  title: string, 
+  desc: string,
+  imageUrl: string,
+  price: number,
+  availableFrom: string,
+  availableTo: string,
+  userId: string
+}
+
 @Injectable({
   providedIn: 'root'
 })
 
 export class PlacesService {
-  private _places = new BehaviorSubject<Place[]>([
-    new Place(
-      '1',
-      'HollyWood Crib',
-      'Located at the centre of HollyWood',
-      '../../../assets/images/hollywood.jpg',
-      100,
-      new Date('2020-01-01'),
-      new Date('2020-12-31'),
-      'dummyUserId'
-    ),
-    new Place(
-      '2',
-      'LA Crib',
-      'Located at centre of LA Blv.',
-      '../../../assets/images/la.jpg',
-      200,
-      new Date('2020-01-01'),
-      new Date('2020-12-31'),
-      'dummyUserId2'
-    ),
-    new Place(
-      '3',
-      'San Fran Crib',
-      'Located at centre of San Fran.',
-      '../../../assets/images/sanfran.jpg',
-      300,
-      new Date('2020-01-01'),
-      new Date('2020-12-31'),
-      'dummyUserId3'
-    ),
-  ]);
+  private _places = new BehaviorSubject<Place[]>([]);
 
   private _offers = new BehaviorSubject<Offer[]>([]);
 
@@ -71,13 +50,6 @@ export class PlacesService {
   * The map function maps the places to the id we want to return that single place
   */
   getOffer(id: string) {
-    /*
-    return this.http.get(`https://ionic-angular-air-bnb-app.firebaseio.com/offered-places/${id}.json`)
-    .pipe(tap(resp => {
-      console.log(resp);
-    }));
-    */
-    
     return this.http
       .get<offerData>(
         `https://ionic-angular-air-bnb-app.firebaseio.com/offered-places/${id}.json`
@@ -97,17 +69,31 @@ export class PlacesService {
         })
       );
         
-    
-    //  return this.offers.pipe(take(1), map(offers => {
-    //    return { ...offers.find(offerid => offerid.id === id) };
-    //  }));
-     
   }
 
   /* the pipe take 1 gets the whole list of observable ( list of places ) 
   * The map function maps the places to the id we want to return that single place
   */
   getPlace(id: string) {
+
+    return this.http
+    .get<placeData>(
+      `https://ionic-angular-air-bnb-app.firebaseio.com/discover-places/${id}.json`
+    )
+    .pipe(
+      map(responseData => {
+        return new Place(
+          id,
+          responseData.title,
+          responseData.desc,
+          responseData.imageUrl,
+          responseData.price,
+          new Date(responseData.availableFrom),
+          new Date(responseData.availableTo),
+          responseData.userId
+        );
+      })
+    );
     return this.places.pipe(take(1), map(places => {
       return { ...places.find(placeid => placeid.id === id) };
     }));
@@ -204,6 +190,33 @@ export class PlacesService {
         }),
         tap(offers => {
           this._offers.next(offers); // this will emit the new places we got from the server
+        }));
+  }
+
+  fetchPlaces() {
+    return this.http.get<{ [key: string]: placeData }>('https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json')
+      .pipe(
+        // the map gets the responseData from server and returns a structured responseData
+        map(responseData => {
+          // transform the object that is returnerd into an array 
+          const places = [];
+          for (const key in responseData) {
+            if (responseData.hasOwnProperty(key)) {
+              places.push(new Offer(key,
+                responseData[key].title,
+                responseData[key].desc,
+                responseData[key].imageUrl,
+                responseData[key].price,
+                new Date(responseData[key].availableFrom),
+                new Date(responseData[key].availableTo),
+                responseData[key].userId));
+            }
+          }
+          console.log(responseData);
+          return places;
+        }),
+        tap(places => {
+          this._places.next(places); // this will emit the new places we got from the server
         }));
   }
 
