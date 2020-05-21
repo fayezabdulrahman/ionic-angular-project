@@ -40,12 +40,10 @@ export class CreateBookingComponent implements OnInit {
   }
 
 
-  dismiss() {
+  dismissModal() {
     // using the injected ModalController this page
     // can "dismiss" itself and optionally pass back data
-    this.modalController.dismiss({
-      'dismissed': true
-    });
+    this.modalController.dismiss({'dismissed': true});
   }
 
   bookPlace() {

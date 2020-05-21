@@ -2,7 +2,7 @@ import { AuthService } from './../../../auth/service/auth.service';
 import { BookingsService } from './../../../bookings/service/bookings.service';
 import { PlacesService } from './../../service/places.service';
 import { Component, OnInit, OnDestroy } from '@angular/core';
-import { NavController, ModalController, ActionSheetController, LoadingController } from '@ionic/angular';
+import { NavController, ModalController, ActionSheetController, LoadingController, AlertController } from '@ionic/angular';
 import { Place } from '../../model/place.model';
 import { ActivatedRoute } from '@angular/router';
 import { CreateBookingComponent } from 'src/app/bookings/create-booking/create-booking.component';
@@ -26,7 +26,8 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
     private authService: AuthService,
     private modalControler: ModalController,
     private actionSheetController: ActionSheetController,
-    private loadingController: LoadingController) { }
+    private loadingController: LoadingController,
+    private alertController: AlertController) { }
 
   ngOnDestroy() {
     // clears the places subscription when its not needed to avoid rxjs leaks 
@@ -44,7 +45,21 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
       this.placeSub = this.placesService.getPlace(paramMap.get('placeId')).subscribe(place => {
         this.place = place;
         this.isBookable = place.userId !== this.authService.userId; // if the place isn't created by the user this will return true
-      });
+      },
+        error => {
+          this.alertController.create({
+            header: 'An error ocurred!',
+            message: 'Could not load place.',
+            buttons: [
+              {
+                text: 'Okay',
+                handler: () => {
+                  this.navController.navigateBack('/places/tabs/discover');
+                }
+              }
+            ]
+          }).then(alertElement => { alertElement.present() });
+        });
     });
   }
 
@@ -88,6 +103,11 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
     });
     await modal.present();
     const { data, role } = await modal.onDidDismiss();
+    // if we click close button in booking modal ( then we don't display alert)
+    if (data['dismissed']) {
+      return;
+    }
+
     this.loadingController.create({ keyboardClose: true, message: 'Booking in Progress...' })
       .then(loadingElement => {
         loadingElement.present();
