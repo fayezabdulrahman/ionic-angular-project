@@ -43,6 +43,8 @@ export class DiscoverPage implements OnInit, OnDestroy {
       // afer we have got data back, set it to false
       this.isPlacesLoaded = false;
     });
+    // if we select 'bookable Places tab' and navigate back.. change the ion-segment value to always be highlighted on 'All Places'
+    document.getElementById('toggleBtnSeg').attributes[1].value = 'all';
   }
 
   toggleSegmentButton(event: any) {
