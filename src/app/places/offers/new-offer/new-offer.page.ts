@@ -62,4 +62,8 @@ export class NewOfferPage implements OnInit {
       });
 
   }
+
+  onPictureTaken(imageData: string) {
+    
+  }
 }
