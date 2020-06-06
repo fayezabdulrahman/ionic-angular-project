@@ -1,5 +1,6 @@
 import { Capacitor, Plugins, CameraSource, CameraResultType } from '@capacitor/core';
-import { Component, OnInit, Output,EventEmitter } from '@angular/core';
+import { Component, OnInit, Output,EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Platform } from '@ionic/angular';
 
 
 @Component({
@@ -9,14 +10,23 @@ import { Component, OnInit, Output,EventEmitter } from '@angular/core';
 })
 export class ImagePickerComponent implements OnInit {
   selectedImage: string;
-  @Output() imagePick = new EventEmitter();
-  constructor() { }
+  usePicker = false;
+  @Output() imagePick = new EventEmitter<string | File>();
+  @ViewChild('filePicker') filePicker: ElementRef<HTMLInputElement>;
 
-  ngOnInit() { }
+  constructor(private platform: Platform) { }
+
+  ngOnInit() { 
+    // this checks if we are running on a desktop
+    if ((this.platform.is('mobile') && !this.platform.is('hybrid')) || this.platform.is('desktop')) {
+      this.usePicker = true;
+    }
+  }
 
   onTakePicture() {
     // we want to open camera on a native device
-    if(!Capacitor.isPluginAvailable('Camera')) {
+    if(!Capacitor.isPluginAvailable('Camera') || this.usePicker) {
+      this.filePicker.nativeElement.click();
       return;
     }
 
@@ -34,6 +44,24 @@ export class ImagePickerComponent implements OnInit {
       console.log(error);
       return false;
     });
+  }
+
+  onFileChosen(event: Event) {
+    const pickedFile = (event.target as HTMLInputElement).files[0];
+    if(!pickedFile) {
+      console.log('No file chosen');
+      return;
+    }
+
+    const fileReader = new FileReader();
+    // filereader is an async method so we have use the onload method to get our result
+    fileReader.onload = () => {
+      const dataURL = fileReader.result.toString();
+      this.selectedImage = dataURL;
+      this.imagePick.emit(pickedFile); // send picked file to new offer page.ts
+    };
+    fileReader.readAsDataURL(pickedFile); // this will convert the image to a base 64 string
+
   }
 
 }
