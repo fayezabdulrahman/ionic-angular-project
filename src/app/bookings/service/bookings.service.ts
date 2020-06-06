@@ -1,11 +1,9 @@
-import { LoadingController } from '@ionic/angular';
 import { AuthService } from './../../auth/service/auth.service';
 import { Injectable } from '@angular/core';
 import { take, map, tap, delay, switchMap } from 'rxjs/operators';
 import { Booking } from '../model/booking.mode';
 import { BehaviorSubject } from 'rxjs';
 import { HttpClient } from '@angular/common/http';
-import { stringify } from 'querystring';
 
 interface bookingData {
   bookedFrom: string,
@@ -45,31 +43,38 @@ export class BookingsService {
   ) {
 
     let generatedId: string;
-    const newBooking = new Booking(
-      Math.random().toString(),
-      placeId,
-      this.authService.userId,
-      placeTitle,
-      placeImg,
-      firstName,
-      lastName,
-      guestNumber,
-      dateFrom,
-      dateTo
-    );
+    let newBooking: Booking;
+    return this.authService.userId.pipe(take(1), switchMap(userId => {
+      if (!userId) {
+        throw new Error('No User Id Found');
+      }
+      newBooking = new Booking(
+        Math.random().toString(),
+        placeId,
+        userId,
+        placeTitle,
+        placeImg,
+        firstName,
+        lastName,
+        guestNumber,
+        dateFrom,
+        dateTo
+      );
 
-    return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/bookings.json', {
-      ...newBooking, id: null
-    })
-      .pipe(switchMap(response => {
+      return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/bookings.json', {
+        ...newBooking, id: null
+      });
+    }),
+      switchMap(response => {
         generatedId = response.name;
         return this.bookings;
       }),
-        take(1),
-        tap(bookingsArray => {
-          newBooking.id = generatedId;
-          this._bookings.next(bookingsArray.concat(newBooking));
-        }));
+      take(1),
+      tap(bookingsArray => {
+        newBooking.id = generatedId;
+        this._bookings.next(bookingsArray.concat(newBooking));
+      }));
+
   }
 
   fetchBookings() {

@@ -4,6 +4,7 @@ import { Component, OnInit, OnDestroy } from '@angular/core';
 import { PlacesService } from '../service/places.service';
 import { Place } from '../model/place.model';
 import { Subscription } from 'rxjs';
+import { take } from 'rxjs/operators';
 
 @Component({
   selector: 'app-discover',
@@ -48,12 +49,15 @@ export class DiscoverPage implements OnInit, OnDestroy {
   }
 
   toggleSegmentButton(event: any) {
-    if (event.detail.value === 'all') {
-      this.relevantPlaces = this.loadedPlaces;
-      this.listedLoadedPlaces = this.relevantPlaces.slice(1);
-    } else {
-      this.relevantPlaces = this.loadedPlaces.filter(place => place.userId !== this.authService.userId);
-      this.listedLoadedPlaces = this.relevantPlaces.slice(1);
-    }
+    this.authService.userId.pipe(take(1)).subscribe(userId => {
+      if (event.detail.value === 'all') {
+        this.relevantPlaces = this.loadedPlaces;
+        this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+      } else {
+        this.relevantPlaces = this.loadedPlaces.filter(place => place.userId !== userId);
+        this.listedLoadedPlaces = this.relevantPlaces.slice(1);
+      }
+    });
+
   }
 }

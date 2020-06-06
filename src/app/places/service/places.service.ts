@@ -101,56 +101,70 @@ export class PlacesService {
 
   addOffer(title: string, desc: string, imageUrl: string, price: number, dateFrom: Date, dateTo: Date) {
     let generatedId: string;
-    const newOffer = new Offer(
-      Math.random().toString(),
-      title,
-      desc,
-      imageUrl,
-      price,
-      dateFrom,
-      dateTo,
-      this.authService.userId
-    );
+    let newOffer: Offer;
+    return this.authService.userId.pipe(take(1), switchMap(userId => {
+      if (!userId) {
+        throw new Error('No User Id Found!');
+      }
+      newOffer = new Offer(
+        Math.random().toString(),
+        title,
+        desc,
+        imageUrl,
+        price,
+        dateFrom,
+        dateTo,
+        userId
+      );
+      return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/offered-places.json', {
+        ...newOffer, id: null
+      });
 
-    return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/offered-places.json', {
-      ...newOffer, id: null
-    })
-      .pipe(switchMap(response => {
+    }),
+      switchMap(response => {
         generatedId = response.name; // this is the name of the generated ID from firbase
         return this.offers;
       }),
-        take(1),
-        tap(offersArray => {
-          newOffer.id = generatedId;
-          this._offers.next(offersArray.concat(newOffer));
-        }));
+      take(1),
+      tap(offersArray => {
+        newOffer.id = generatedId;
+        this._offers.next(offersArray.concat(newOffer));
+      }));
+
   }
 
   addPlace(title: string, desc: string, price: number, dateFrom: Date, dateTo: Date) {
     let generatedId: string;
-    const newPlace = new Place(
-      Math.random().toString(),
-      title,
-      desc,
-      '../../../assets/images/sanfran.jpg',
-      price,
-      dateFrom,
-      dateTo,
-      this.authService.userId
-    );
+    let newPlace: Place;
+    return this.authService.userId.pipe(take(1), switchMap(userId => {
+      if (!userId) {
+        throw new Error('No User Id Found!');
+      }
+      newPlace = new Place(
+        Math.random().toString(),
+        title,
+        desc,
+        '../../../assets/images/sanfran.jpg',
+        price,
+        dateFrom,
+        dateTo,
+        userId
+      );
+      return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json', {
+        ...newPlace, id: null
+      });
 
-    return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json', {
-      ...newPlace, id: null
-    })
-      .pipe(switchMap(response => {
+    }),
+      switchMap(response => {
         generatedId = response.name; // this is the name of the generated ID from firbase
         return this.places;
       }),
-        take(1),
-        tap(placesArray => {
-          newPlace.id = generatedId;
-          this._places.next(placesArray.concat(newPlace));
-        }));
+      take(1),
+      tap(placesArray => {
+        newPlace.id = generatedId;
+        this._places.next(placesArray.concat(newPlace));
+      }));
+
   }
 
   updateOffer(offerId: string, title: string, description: string) {
@@ -250,7 +264,7 @@ export class PlacesService {
     const uploadData = new FormData();
     uploadData.append('image', image);
 
-    return this.http.post<{imageUrl: string, imagePath: string}>(
+    return this.http.post<{ imageUrl: string, imagePath: string }>(
       'https://us-central1-ionic-angular-air-bnb-app.cloudfunctions.net/storeImage',
       uploadData);
   }

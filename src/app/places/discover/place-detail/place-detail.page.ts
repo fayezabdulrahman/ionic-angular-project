@@ -7,6 +7,8 @@ import { Place } from '../../model/place.model';
 import { ActivatedRoute } from '@angular/router';
 import { CreateBookingComponent } from 'src/app/bookings/create-booking/create-booking.component';
 import { Subscription } from 'rxjs';
+import { THIS_EXPR } from '@angular/compiler/src/output/output_ast';
+import { take, switchMap } from 'rxjs/operators';
 
 @Component({
   selector: 'app-place-detail',
@@ -42,24 +44,33 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
         this.navController.navigateBack('/places/tabs/discover');
         return; // this is needed so other code doesn't get executed
       }
-      this.placeSub = this.placesService.getPlace(paramMap.get('placeId')).subscribe(place => {
-        this.place = place;
-        this.isBookable = place.userId !== this.authService.userId; // if the place isn't created by the user this will return true
-      },
-        error => {
-          this.alertController.create({
-            header: 'An error ocurred!',
-            message: 'Could not load place.',
-            buttons: [
-              {
-                text: 'Okay',
-                handler: () => {
-                  this.navController.navigateBack('/places/tabs/discover');
+      let fetchedUserId: string;
+      this.authService.userId.pipe(switchMap(userId => {
+        if (!userId) {
+          throw new Error('User Id not found!');
+        }
+        fetchedUserId = userId;
+        return this.placesService.getPlace(paramMap.get('placeId'));
+
+      }))
+        .subscribe(place => {
+          this.place = place;
+          this.isBookable = place.userId !== fetchedUserId; // if the place isn't created by the user this will return true
+        },
+          error => {
+            this.alertController.create({
+              header: 'An error ocurred!',
+              message: 'Could not load place.',
+              buttons: [
+                {
+                  text: 'Okay',
+                  handler: () => {
+                    this.navController.navigateBack('/places/tabs/discover');
+                  }
                 }
-              }
-            ]
-          }).then(alertElement => { alertElement.present() });
-        });
+              ]
+            }).then(alertElement => { alertElement.present() });
+          });
     });
   }
 
