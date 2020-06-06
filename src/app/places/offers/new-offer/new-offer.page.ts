@@ -1,9 +1,10 @@
+import { switchMap } from 'rxjs/operators';
 import { NavController, LoadingController } from '@ionic/angular';
 import { PlacesService } from './../../service/places.service';
 import { Component, OnInit, Input } from '@angular/core'
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 
-function blobToFile(theBlob, fileName){
+function blobToFile(theBlob, fileName) {
   //A Blob() is almost a File() - it's just missing the two properties below which we will add
   theBlob.lastModifiedDate = new Date();
   theBlob.name = fileName;
@@ -55,19 +56,24 @@ export class NewOfferPage implements OnInit {
       .then(loadingElement => {
         loadingElement.present(); // present the loading controller
 
-        // call addOffer from the placeService
-        this.placeService.addOffer
-          (this.offerForm.value.title,
-            this.offerForm.value.description,
-            +this.offerForm.value.price,
-            this.offerForm.value.dateFrom,
-            this.offerForm.value.dateTo)
-          // when the adding place is complete, we dismiss the loading spinner, and reset the form 
+        // call the upload fomage from placesService
+        this.placeService.uploadImage(this.offerForm.get('image').value).pipe(switchMap(uploadResponse => {
+          // call addOffer from the placeService
+          return this.placeService.addOffer
+            (this.offerForm.value.title,
+              this.offerForm.value.description,
+              uploadResponse.imageUrl,
+              +this.offerForm.value.price,
+              this.offerForm.value.dateFrom,
+              this.offerForm.value.dateTo,
+            );
+        }))
           .subscribe(() => {
+            // when the adding place is complete, we dismiss the loading spinner, and reset the form 
             loadingElement.dismiss();
             this.offerForm.reset();
             this.navController.navigateBack('/places/tabs/offers');
-          });
+          });;
       });
 
   }
@@ -90,6 +96,6 @@ export class NewOfferPage implements OnInit {
     }
 
     // set the image variable from the form to imageFile we got here
-    this.offerForm.patchValue({image: imageFile});
+    this.offerForm.patchValue({ image: imageFile });
   }
 }

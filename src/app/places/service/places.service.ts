@@ -17,7 +17,7 @@ interface offerData {
 }
 
 interface placeData {
-  title: string, 
+  title: string,
   desc: string,
   imageUrl: string,
   price: number,
@@ -68,7 +68,7 @@ export class PlacesService {
           );
         })
       );
-        
+
   }
 
   /* the pipe take 1 gets the whole list of observable ( list of places ) 
@@ -77,35 +77,35 @@ export class PlacesService {
   getPlace(id: string) {
 
     return this.http
-    .get<placeData>(
-      `https://ionic-angular-air-bnb-app.firebaseio.com/discover-places/${id}.json`
-    )
-    .pipe(
-      map(responseData => {
-        return new Place(
-          id,
-          responseData.title,
-          responseData.desc,
-          responseData.imageUrl,
-          responseData.price,
-          new Date(responseData.availableFrom),
-          new Date(responseData.availableTo),
-          responseData.userId
-        );
-      })
-    );
+      .get<placeData>(
+        `https://ionic-angular-air-bnb-app.firebaseio.com/discover-places/${id}.json`
+      )
+      .pipe(
+        map(responseData => {
+          return new Place(
+            id,
+            responseData.title,
+            responseData.desc,
+            responseData.imageUrl,
+            responseData.price,
+            new Date(responseData.availableFrom),
+            new Date(responseData.availableTo),
+            responseData.userId
+          );
+        })
+      );
     return this.places.pipe(take(1), map(places => {
       return { ...places.find(placeid => placeid.id === id) };
     }));
   }
 
-  addOffer(title: string, desc: string, price: number, dateFrom: Date, dateTo: Date) {
+  addOffer(title: string, desc: string, imageUrl: string, price: number, dateFrom: Date, dateTo: Date) {
     let generatedId: string;
     const newOffer = new Offer(
       Math.random().toString(),
       title,
       desc,
-      '../../../assets/images/place.png',
+      imageUrl,
       price,
       dateFrom,
       dateTo,
@@ -246,4 +246,12 @@ export class PlacesService {
         }));
   }
 
+  uploadImage(image: File) {
+    const uploadData = new FormData();
+    uploadData.append('image', image);
+
+    return this.http.post<{imageUrl: string, imagePath: string}>(
+      'https://us-central1-ionic-angular-air-bnb-app.cloudfunctions.net/storeImage',
+      uploadData);
+  }
 }
