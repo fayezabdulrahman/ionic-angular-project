@@ -1,5 +1,5 @@
 import { Capacitor, Plugins, CameraSource, CameraResultType } from '@capacitor/core';
-import { Component, OnInit, Output,EventEmitter, ViewChild, ElementRef } from '@angular/core';
+import { Component, OnInit, Output, EventEmitter, ViewChild, ElementRef } from '@angular/core';
 import { Platform } from '@ionic/angular';
 
 
@@ -16,7 +16,7 @@ export class ImagePickerComponent implements OnInit {
 
   constructor(private platform: Platform) { }
 
-  ngOnInit() { 
+  ngOnInit() {
     // this checks if we are running on a desktop
     if ((this.platform.is('mobile') && !this.platform.is('hybrid')) || this.platform.is('desktop')) {
       this.usePicker = true;
@@ -25,7 +25,7 @@ export class ImagePickerComponent implements OnInit {
 
   onTakePicture() {
     // we want to open camera on a native device
-    if(!Capacitor.isPluginAvailable('Camera') || this.usePicker) {
+    if (!Capacitor.isPluginAvailable('Camera')) {
       this.filePicker.nativeElement.click();
       return;
     }
@@ -37,18 +37,22 @@ export class ImagePickerComponent implements OnInit {
       height: 320,
       width: 200,
       resultType: CameraResultType.DataUrl
-    }).then( image => {
+    }).then(image => {
       this.selectedImage = image.dataUrl;
       this.imagePick.emit(image.dataUrl);
     }).catch(error => {
       console.log(error);
+      if (this.usePicker) {
+        this.filePicker.nativeElement.click();
+      }
+
       return false;
     });
   }
 
   onFileChosen(event: Event) {
     const pickedFile = (event.target as HTMLInputElement).files[0];
-    if(!pickedFile) {
+    if (!pickedFile) {
       console.log('No file chosen');
       return;
     }

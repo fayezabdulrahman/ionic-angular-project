@@ -3,25 +3,11 @@ import { PlacesService } from './../../service/places.service';
 import { Component, OnInit, Input } from '@angular/core'
 import { FormGroup, FormControl, Validators } from '@angular/forms';
 
-function base64toBlob(base64Data, contentType) {
-  contentType = contentType || '';
-  const sliceSize = 1024;
-  const byteCharacters = atob(base64Data);
-  const bytesLength = byteCharacters.length;
-  const slicesCount = Math.ceil(bytesLength / sliceSize);
-  const byteArrays = new Array(slicesCount);
-
-  for (var sliceIndex = 0; sliceIndex < slicesCount; ++sliceIndex) {
-    const begin = sliceIndex * sliceSize;
-    const end = Math.min(begin + sliceSize, bytesLength);
-
-    const bytes = new Array(end - begin);
-    for (let offset = begin, i = 0; offset < end; ++i, ++offset) {
-      bytes[i] = byteCharacters[offset].charCodeAt(0);
-    }
-    byteArrays[sliceIndex] = new Uint8Array(bytes);
-  }
-  return new Blob(byteArrays, { type: contentType });
+function blobToFile(theBlob, fileName){
+  //A Blob() is almost a File() - it's just missing the two properties below which we will add
+  theBlob.lastModifiedDate = new Date();
+  theBlob.name = fileName;
+  return theBlob;
 }
 
 @Component({
@@ -91,11 +77,11 @@ export class NewOfferPage implements OnInit {
     if (typeof imageData === 'string') {
       // convert to File
       try {
-        imageFile = base64toBlob(imageData.replace('data:image/jpeg;base64,', ''), 'image/jpeg');
+        let myblob = new Blob();
+        imageFile = blobToFile(myblob, imageData);
       }
       catch (error) {
-        console.log('Image cant be converted');
-        console.log(error);
+        console.log('Image cant be converted to a file\n' + error);
         return;
       }
     } else {
