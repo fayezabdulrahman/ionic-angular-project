@@ -45,14 +45,16 @@ export class PlaceDetailPage implements OnInit, OnDestroy {
         return; // this is needed so other code doesn't get executed
       }
       let fetchedUserId: string;
-      this.authService.userId.pipe(switchMap(userId => {
-        if (!userId) {
-          throw new Error('User Id not found!');
-        }
-        fetchedUserId = userId;
-        return this.placesService.getPlace(paramMap.get('placeId'));
+      this.authService.userId.pipe(
+        take(1),
+        switchMap(userId => {
+          if (!userId) {
+            throw new Error('User Id not found!');
+          }
+          fetchedUserId = userId;
+          return this.placesService.getPlace(paramMap.get('placeId'));
 
-      }))
+        }))
         .subscribe(place => {
           this.place = place;
           this.isBookable = place.userId !== fetchedUserId; // if the place isn't created by the user this will return true

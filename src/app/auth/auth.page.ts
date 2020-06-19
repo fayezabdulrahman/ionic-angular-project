@@ -68,6 +68,9 @@ export class AuthPage implements OnInit {
 
     // call the authenticate method
     this.authenticate(email, password);
+
+    //reset form after authenticated so when we log out its not populated
+    formLogin.reset();
   }
 
   switchAuthMode() {

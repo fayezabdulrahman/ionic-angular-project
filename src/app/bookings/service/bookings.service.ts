@@ -78,8 +78,16 @@ export class BookingsService {
   }
 
   fetchBookings() {
-    return this.http.get<{ [key: string]: bookingData }>(`https://ionic-angular-air-bnb-app.firebaseio.com/bookings.json?orderBy="userId"&equalTo="${this.authService.userId}"`)
-      .pipe(map(bookingData => {
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap(userId => {
+        if (!userId) {
+          throw new Error('No user Id found!');
+        }
+        return this.http.get<{ [key: string]: bookingData }>(
+          `https://ionic-angular-air-bnb-app.firebaseio.com/bookings.json?orderBy="userId"&equalTo="${userId}"`);
+      }),
+      map(bookingData => {
         const bookings = [];
         for (const key in bookingData) {
           if (bookingData.hasOwnProperty(key)) {
@@ -99,9 +107,9 @@ export class BookingsService {
         }
         return bookings;
       }),
-        tap(bookings => {
-          this._bookings.next(bookings);
-        }));
+      tap(bookings => {
+        this._bookings.next(bookings);
+      }));
   }
 
 
