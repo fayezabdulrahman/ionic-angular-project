@@ -4,7 +4,7 @@ import { Injectable } from '@angular/core';
 import { take, map, tap, delay, switchMap } from 'rxjs/operators';
 import { Place } from '../model/place.model';
 import { Offer } from '../model/offer.model';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject, of, pipe } from 'rxjs';
 
 interface offerData {
   title: string,
@@ -50,11 +50,12 @@ export class PlacesService {
   * The map function maps the places to the id we want to return that single place
   */
   getOffer(id: string) {
-    return this.http
-      .get<offerData>(
-        `https://ionic-angular-air-bnb-app.firebaseio.com/offered-places/${id}.json`
-      )
-      .pipe(
+    return this.authService.token.pipe(switchMap(token => {
+      return this.http
+        .get<offerData>(
+          `https://ionic-angular-air-bnb-app.firebaseio.com/offered-places/${id}.json?auth=${token}`
+        )
+    }),
         map(responseData => {
           return new Offer(
             id,
@@ -68,19 +69,18 @@ export class PlacesService {
           );
         })
       );
-
   }
 
   /* the pipe take 1 gets the whole list of observable ( list of places ) 
   * The map function maps the places to the id we want to return that single place
   */
   getPlace(id: string) {
-
-    return this.http
-      .get<placeData>(
-        `https://ionic-angular-air-bnb-app.firebaseio.com/discover-places/${id}.json`
-      )
-      .pipe(
+    return this.authService.token.pipe(switchMap(token => {
+      return this.http
+        .get<placeData>(
+          `https://ionic-angular-air-bnb-app.firebaseio.com/discover-places/${id}.json?auth=${token}`
+        )
+    }),
         map(responseData => {
           return new Place(
             id,
@@ -102,25 +102,33 @@ export class PlacesService {
   addOffer(title: string, desc: string, imageUrl: string, price: number, dateFrom: Date, dateTo: Date) {
     let generatedId: string;
     let newOffer: Offer;
-    return this.authService.userId.pipe(take(1), switchMap(userId => {
-      if (!userId) {
-        throw new Error('No User Id Found!');
-      }
-      newOffer = new Offer(
-        Math.random().toString(),
-        title,
-        desc,
-        imageUrl,
-        price,
-        dateFrom,
-        dateTo,
-        userId
-      );
-      return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/offered-places.json', {
-        ...newOffer, id: null
-      });
+    let fetchedUserId: string;
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap(userId => {
+        fetchedUserId = userId;
+        return this.authService.token;
+      }),
+      take(1),
+      switchMap(token => {
+        if (!fetchedUserId) {
+          throw new Error('No User Id Found!');
+        }
+        newOffer = new Offer(
+          Math.random().toString(),
+          title,
+          desc,
+          imageUrl,
+          price,
+          dateFrom,
+          dateTo,
+          fetchedUserId
+        );
+        return this.http.post<{ name: string }>(`https://ionic-angular-air-bnb-app.firebaseio.com/offered-places.json?auth=${token}`, {
+          ...newOffer, id: null
+        });
 
-    }),
+      }),
       switchMap(response => {
         generatedId = response.name; // this is the name of the generated ID from firbase
         return this.offers;
@@ -136,25 +144,33 @@ export class PlacesService {
   addPlace(title: string, desc: string, price: number, dateFrom: Date, dateTo: Date) {
     let generatedId: string;
     let newPlace: Place;
-    return this.authService.userId.pipe(take(1), switchMap(userId => {
-      if (!userId) {
-        throw new Error('No User Id Found!');
-      }
-      newPlace = new Place(
-        Math.random().toString(),
-        title,
-        desc,
-        '../../../assets/images/sanfran.jpg',
-        price,
-        dateFrom,
-        dateTo,
-        userId
-      );
-      return this.http.post<{ name: string }>('https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json', {
-        ...newPlace, id: null
-      });
+    let fetchedUserId: string;
+    return this.authService.userId.pipe(
+      take(1),
+      switchMap(userId => {
+        fetchedUserId = userId;
+        return this.authService.token;
+      }),
+      take(1),
+      switchMap(token => {
+        if (!fetchedUserId) {
+          throw new Error('No User Id Found!');
+        }
+        newPlace = new Place(
+          Math.random().toString(),
+          title,
+          desc,
+          '../../../assets/images/sanfran.jpg',
+          price,
+          dateFrom,
+          dateTo,
+          fetchedUserId
+        );
+        return this.http.post<{ name: string }>(`https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json?auth=${token}`, {
+          ...newPlace, id: null
+        });
 
-    }),
+      }),
       switchMap(response => {
         generatedId = response.name; // this is the name of the generated ID from firbase
         return this.places;
@@ -172,7 +188,13 @@ export class PlacesService {
     // tap() allows us to execute code within the offers we are fetching
     // switchMap() allows us to update the places on the server with the new data 
     let updatedOffers: Offer[];
-    return this.offers.pipe(
+    let fetchedToken: String;
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        fetchedToken = token;
+        return this.offers;
+      }),
       take(1),
       switchMap(offers => {
         if (!offers || offers.length <= 0) {
@@ -199,18 +221,22 @@ export class PlacesService {
           oldOffer.availableTo,
           oldOffer.userId);
 
-        return this.http.put(`https://ionic-angular-air-bnb-app.firebaseio.com/offered-places/${offerId}.json`,
+        return this.http.put(`https://ionic-angular-air-bnb-app.firebaseio.com/offered-places/${offerId}.json?auth=${fetchedToken}`,
           { ...updatedOffers[updatedOffersIndex], id: null, })
       }),
       tap(() => {
         // update the offer locally and emit the new updated offers
         this._offers.next(updatedOffers); // this line will emit the updatedOffers array ( the old offers array and the new update one)
-      }));
+      })
+    );
   }
 
   fetchOffers() {
-    return this.http.get<{ [key: string]: offerData }>('https://ionic-angular-air-bnb-app.firebaseio.com/offered-places.json')
-      .pipe(
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        return this.http.get<{ [key: string]: offerData }>(`https://ionic-angular-air-bnb-app.firebaseio.com/offered-places.json?auth=${token}`)
+      }),
         // the map gets the responseData from server and returns a structured responseData
         map(responseData => {
           // transform the object that is returnerd into an array 
@@ -235,37 +261,45 @@ export class PlacesService {
   }
 
   fetchPlaces() {
-    return this.http.get<{ [key: string]: placeData }>('https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json')
-      .pipe(
-        // the map gets the responseData from server and returns a structured responseData
-        map(responseData => {
-          // transform the object that is returnerd into an array 
-          const places = [];
-          for (const key in responseData) {
-            if (responseData.hasOwnProperty(key)) {
-              places.push(new Place(key,
-                responseData[key].title,
-                responseData[key].desc,
-                responseData[key].imageUrl,
-                responseData[key].price,
-                new Date(responseData[key].availableFrom),
-                new Date(responseData[key].availableTo),
-                responseData[key].userId));
-            }
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        return this.http.get<{ [key: string]: placeData }>(`https://ionic-angular-air-bnb-app.firebaseio.com/discover-places.json?auth=${token}`)
+      }),
+      // the map gets the responseData from server and returns a structured responseData
+      map(responseData => {
+        // transform the object that is returnerd into an array 
+        const places = [];
+        for (const key in responseData) {
+          if (responseData.hasOwnProperty(key)) {
+            places.push(new Place(key,
+              responseData[key].title,
+              responseData[key].desc,
+              responseData[key].imageUrl,
+              responseData[key].price,
+              new Date(responseData[key].availableFrom),
+              new Date(responseData[key].availableTo),
+              responseData[key].userId));
           }
-          return places;
-        }),
-        tap(places => {
-          this._places.next(places); // this will emit the new places we got from the server
-        }));
+        }
+        return places;
+      }),
+      tap(places => {
+        this._places.next(places); // this will emit the new places we got from the server
+      }));
   }
 
   uploadImage(image: File) {
     const uploadData = new FormData();
     uploadData.append('image', image);
 
-    return this.http.post<{ imageUrl: string, imagePath: string }>(
-      'https://us-central1-ionic-angular-air-bnb-app.cloudfunctions.net/storeImage',
-      uploadData);
+    return this.authService.token.pipe(
+      take(1),
+      switchMap(token => {
+        return this.http.post<{ imageUrl: string, imagePath: string }>(
+          'https://us-central1-ionic-angular-air-bnb-app.cloudfunctions.net/storeImage',
+          uploadData, { headers: { Authorization: 'Bearer ' + token } });
+      }));
+
   }
 }
